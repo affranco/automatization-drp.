@@ -7,53 +7,82 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  # Nombre del repositorio genérico en JFrog donde guardarás la Lambda
-  JFROG_TARGET_REPO: 'mi-repo-generico-local' 
+  - group: drp-secrets # Importa JFROG_TOKEN de Azure DevOps
+  - name: JFROG_REPO
+    value: 'drp-artifacts'
+  - name: AWS_REGION
+    value: 'us-east-1'
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.9'
-    architecture: 'x64'
-  displayName: 'Configurar Python 3.9'
+stages:
+- stage: Build_and_Publish
+  displayName: 'Construir y Subir a JFrog'
+  jobs:
+  - job: BuildLambda
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+        architecture: 'x64'
 
-- script: |
-    echo "Instalando dependencias de la Lambda..."
-    # Instalar redis en la carpeta 'package' (sin afectar el sistema global)
-    pip install redis==5.0.1 -t ./package
-  displayName: 'Instalar dependencias (redis-py)'
+    - script: |
+        pip install -r src/requirements.txt -t ./package
+        cd package
+        zip -r ../drp-redis-flush.zip .
+        cd ..
+        zip -g drp-redis-flush.zip src/lambda_function.py
+      displayName: 'Empaquetar dependencias y código en ZIP'
 
-- script: |
-    echo "Empaquetando artefacto drp-redis-flush.zip..."
-    cd package
-    zip -r ../drp-redis-flush.zip .
-    cd ..
-    # Agregar el script principal (lambda_function.py) a la raíz del zip
-    zip -g drp-redis-flush.zip lambda_function.py
-  displayName: 'Empaquetar código en ZIP'
-
-- task: JFrogGenericArtifacts@1
-  displayName: 'Subir ZIP a JFrog Artifactory'
-  inputs:
-    command: 'Upload'
-    connection: 'JFrog-Connection' # El nombre de tu Service Connection
-    specSource: 'taskConfiguration'
-    fileSpec: |
-      {
-        "files": [
+    - task: JFrogGenericArtifacts@1
+      displayName: 'Subir artefacto a JFrog'
+      inputs:
+        command: 'Upload'
+        connection: 'jfrog-drp-connection'
+        specSource: 'taskConfiguration'
+        fileSpec: |
           {
-            "pattern": "drp-redis-flush.zip",
-            "target": "$(JFROG_TARGET_REPO)/lambda/drp-redis-flush/$(Build.BuildId)/drp-redis-flush.zip"
+            "files": [
+              {
+                "pattern": "drp-redis-flush.zip",
+                "target": "$(JFROG_REPO)/lambda/drp-redis-flush/$(Build.BuildId)/drp-redis-flush.zip"
+              }
+            ]
           }
-        ]
-      }
-    collectBuildInfo: true
-    buildName: '$(Build.DefinitionName)'
-    buildNumber: '$(Build.BuildId)'
+        collectBuildInfo: true
+        buildName: '$(Build.DefinitionName)'
+        buildNumber: '$(Build.BuildId)'
 
-- task: JFrogPublishBuildInfo@1
-  displayName: 'Publicar metadatos del Build en JFrog'
-  inputs:
-    connection: 'JFrog-Connection'
-    buildName: '$(Build.DefinitionName)'
-    buildNumber: '$(Build.BuildId)'
+- stage: Deploy_Dev_Virginia
+  displayName: 'Desplegar AWS (Dev Virginia)'
+  dependsOn: Build_and_Publish
+  condition: succeeded()
+  jobs:
+  - job: TerraformApply
+    variables:
+      TF_VAR_build_number: '$(Build.BuildId)'
+      TF_VAR_environment: 'DEV'
+      TF_VAR_redis_endpoint: 'drp-redis-dev-use1.xxxxxx.use1.cache.amazonaws.com'
+      TF_VAR_lambda_execution_role_arn: 'arn:aws:iam::CUENTA_DESTINO:role/DRP-Execution-CrossAccount-Role'
+      TF_VAR_lambda_security_group_id: 'sg-xxxxxxxxxxxx'
+      # Las listas en Terraform por variable de entorno se definen en formato JSON
+      TF_VAR_private_subnet_ids: '["subnet-aaaa", "subnet-bbbb"]' 
+    steps:
+    - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
+
+    - task: AWSShellScript@1
+      displayName: 'Terraform Init & Apply'
+      env:
+        TF_VAR_jfrog_token: $(JFROG_TOKEN)
+      inputs:
+        awsCredentials: 'aws-virginia-dev'
+        regionName: '$(AWS_REGION)'
+        scriptType: 'inline'
+        inlineScript: |
+          cd infra
+          terraform init \
+            -backend-config="bucket=tfstate-drp-automatization-devops" \
+            -backend-config="key=virginia/dev/redis-lambda.tfstate" \
+            -backend-config="region=$(AWS_REGION)"
+          
+          terraform apply -auto-approve
