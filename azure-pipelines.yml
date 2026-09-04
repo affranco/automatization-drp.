@@ -63,26 +63,31 @@ stages:
       TF_VAR_redis_endpoint: 'drp-redis-dev-use1.xxxxxx.use1.cache.amazonaws.com'
       TF_VAR_lambda_execution_role_arn: 'arn:aws:iam::CUENTA_DESTINO:role/DRP-Execution-CrossAccount-Role'
       TF_VAR_lambda_security_group_id: 'sg-xxxxxxxxxxxx'
-      # Las listas en Terraform por variable de entorno se definen en formato JSON
       TF_VAR_private_subnet_ids: '["subnet-aaaa", "subnet-bbbb"]' 
     steps:
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
+      displayName: 'Instalar Terraform'
       inputs:
         terraformVersion: 'latest'
 
-    - task: AWSShellScript@1
-      displayName: 'Terraform Init & Apply'
-      env:
-        TF_VAR_jfrog_token: $(JFROG_TOKEN)
+    - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
+      displayName: 'Terraform Init'
       inputs:
-        awsCredentials: 'aws-virginia-dev'
-        regionName: '$(AWS_REGION)'
-        scriptType: 'inline'
-        inlineScript: |
-          cd infra
-          terraform init \
-            -backend-config="bucket=tfstate-drp-automatization-devops" \
-            -backend-config="key=virginia/dev/redis-lambda.tfstate" \
-            -backend-config="region=$(AWS_REGION)"
-          
-          terraform apply -auto-approve
+        provider: 'aws'
+        command: 'init'
+        workingDirectory: 'infra'
+        backendServiceAWS: 'aws-virginia-dev-tf' # <-- El nuevo nombre de tu conexión
+        backendAWSBucketName: 'tfstate-drp-automatization-devops' # Cambia por tu bucket real
+        backendAWSKey: 'virginia/dev/redis-lambda.tfstate'
+        backendAWSRegion: 'us-east-1'
+
+    - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
+      displayName: 'Terraform Apply'
+      env:
+        TF_VAR_jfrog_token: $(JFROG_TOKEN) # Inyecta el secreto de JFrog
+      inputs:
+        provider: 'aws'
+        command: 'apply'
+        workingDirectory: 'infra'
+        environmentServiceNameAWS: 'aws-virginia-dev-tf' # <-- El nuevo nombre de tu conexión
+        commandOptions: '-auto-approve'
