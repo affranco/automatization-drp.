@@ -1,0 +1,59 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Nombre del repositorio genérico en JFrog donde guardarás la Lambda
+  JFROG_TARGET_REPO: 'mi-repo-generico-local' 
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.9'
+    architecture: 'x64'
+  displayName: 'Configurar Python 3.9'
+
+- script: |
+    echo "Instalando dependencias de la Lambda..."
+    # Instalar redis en la carpeta 'package' (sin afectar el sistema global)
+    pip install redis==5.0.1 -t ./package
+  displayName: 'Instalar dependencias (redis-py)'
+
+- script: |
+    echo "Empaquetando artefacto drp-redis-flush.zip..."
+    cd package
+    zip -r ../drp-redis-flush.zip .
+    cd ..
+    # Agregar el script principal (lambda_function.py) a la raíz del zip
+    zip -g drp-redis-flush.zip lambda_function.py
+  displayName: 'Empaquetar código en ZIP'
+
+- task: JFrogGenericArtifacts@1
+  displayName: 'Subir ZIP a JFrog Artifactory'
+  inputs:
+    command: 'Upload'
+    connection: 'JFrog-Connection' # El nombre de tu Service Connection
+    specSource: 'taskConfiguration'
+    fileSpec: |
+      {
+        "files": [
+          {
+            "pattern": "drp-redis-flush.zip",
+            "target": "$(JFROG_TARGET_REPO)/lambda/drp-redis-flush/$(Build.BuildId)/drp-redis-flush.zip"
+          }
+        ]
+      }
+    collectBuildInfo: true
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildId)'
+
+- task: JFrogPublishBuildInfo@1
+  displayName: 'Publicar metadatos del Build en JFrog'
+  inputs:
+    connection: 'JFrog-Connection'
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildId)'
