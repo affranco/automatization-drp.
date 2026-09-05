@@ -1,14 +1,3 @@
-variable "build_number" {
-  description = "ID del build de Azure DevOps para descargar de JFrog"
-  type        = string
-}
-
-variable "jfrog_token" {
-  description = "Token de JFrog Artifactory"
-  type        = string
-  sensitive   = true
-}
-
 variable "environment" {
   description = "Entorno donde se despliega (DEV, PROD)"
   type        = string
