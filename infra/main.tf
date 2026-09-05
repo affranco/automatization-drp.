@@ -1,4 +1,4 @@
-terraform {
+  terraform {
   backend "s3" {} # <-- ESTA LÍNEA ES LA CLAVE FALTANTE
   
   required_providers {
