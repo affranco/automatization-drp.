@@ -74,6 +74,14 @@ stages:
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Init'
+      inputs:
+        provider: 'aws'
+        command: 'init'
+        workingDirectory: 'infra'ßßß
+        backendServiceAWS: 'aws-virginia-dev-tf' 
+        backendAWSBucketName: 'tfstate-drp-automatization-devops' 
+        backendAWSKey: 'virginia/dev/redis-lambda.tfstate'
+        backendAWSRegion: 'us-east-1'
       # ... (mantén tu configuración de init igual)
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
