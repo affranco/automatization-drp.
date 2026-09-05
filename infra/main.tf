@@ -9,15 +9,6 @@
   }
 }
 
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 resource "aws_lambda_function" "redis_flush" {
   filename         = "drp-redis-flush.zip" # Apunta directo al archivo local
   function_name    = "drp-redis-flush"
