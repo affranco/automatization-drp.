@@ -63,14 +63,22 @@ stages:
       inputs:
         terraformVersion: 'latest'
 
-    - script: |
-        curl -H "Authorization: Bearer $(JFROG_TOKEN)" \
-             -o drp-redis-flush.zip \
-             "https://trialmww3an.jfrog.io/artifactory/drp-artifacts/lambda/drp-redis-flush/$(Build.BuildId)/drp-redis-flush.zip"
-      workingDirectory: 'infra'
-      displayName: 'Descargar ZIP de JFrog mediante cURL'
-      env:
-        JFROG_TOKEN: $(JFROG_TOKEN)
+    - task: JFrogGenericArtifacts@1
+      displayName: 'Descargar ZIP desde JFrog'
+      inputs:
+        command: 'Download'
+        connection: 'jfrog-drp-connection'
+        specSource: 'taskConfiguration'
+        fileSpec: |
+          {
+            "files": [
+              {
+                "pattern": "$(JFROG_REPO)/lambda/drp-redis-flush/$(Build.BuildId)/drp-redis-flush.zip",
+                "target": "infra/",
+                "flat": "true"
+              }
+            ]
+          }
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Init'
