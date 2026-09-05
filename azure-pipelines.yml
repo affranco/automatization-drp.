@@ -63,22 +63,24 @@ stages:
       inputs:
         terraformVersion: 'latest'
 
+    - script: |
+        curl -H "Authorization: Bearer $(JFROG_TOKEN)" \
+             -o drp-redis-flush.zip \
+             "https://trialmww3an.jfrog.io/artifactory/drp-artifacts/lambda/drp-redis-flush/$(Build.BuildId)/drp-redis-flush.zip"
+      workingDirectory: 'infra'
+      displayName: 'Descargar ZIP de JFrog mediante cURL'
+      env:
+        JFROG_TOKEN: $(JFROG_TOKEN)
+
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Init'
-      inputs:
-        provider: 'aws'
-        command: 'init'
-        workingDirectory: 'infra'
-        backendServiceAWS: 'aws-virginia-dev-tf'
-        backendAWSBucketName: 'tfstate-drp-automatization-devops'
-        backendAWSKey: 'virginia/dev/redis-lambda.tfstate'
-        backendAWSRegion: 'us-east-1'
+      # ... (mantén tu configuración de init igual)
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Apply'
       env:
-        TF_VAR_jfrog_token: $(JFROG_TOKEN)
-        TF_VAR_build_number: $(Build.BuildId)
+        # Ya no inyectamos jfrog_token ni build_number aquí porque TF no los usa, 
+        # pero mantenemos los de infraestructura:
         TF_VAR_environment: 'DEV'
         TF_VAR_redis_endpoint: 'prueba-zzsueq.serverless.use1.cache.amazonaws.com'
         TF_VAR_lambda_execution_role_arn: 'arn:aws:iam::537650461158:role/DRP-Execution-CrossAccount-Role'
