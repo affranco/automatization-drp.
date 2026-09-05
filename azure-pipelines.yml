@@ -60,8 +60,8 @@ stages:
     variables:
       TF_VAR_build_number: '$(Build.BuildId)'
       TF_VAR_environment: 'DEV'
-      TF_VAR_redis_endpoint: 'prueba-zzsueq.serverless.use1.cache.amazonaws.com:6379'
-      TF_VAR_lambda_execution_role_arn: 'arn:aws:elasticache:us-east-1:537650461158:serverlesscache:prueba'
+      TF_VAR_redis_endpoint: 'prueba-zzsueq.serverless.use1.cache.amazonaws.com'
+      TF_VAR_lambda_execution_role_arn: 'arn:aws:elasticache:us-east-1:537650461158:serverlesscache:prueba' # Reemplaza TU_CUENTA_AWS con tu ID de cuenta
       TF_VAR_lambda_security_group_id: 'sg-0d3459c7932d9e84b'
       TF_VAR_private_subnet_ids: '["subnet-084f5211209b6d055", "subnet-00496c3f21802676c", "subnet-0c9aa04262f52e1d7"]' 
     steps:
