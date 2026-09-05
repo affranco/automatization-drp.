@@ -78,7 +78,7 @@ stages:
         provider: 'aws'
         command: 'init'
         workingDirectory: 'infra'
-        environmentServiceNameAWS: 'aws-virginia-dev-tf'
+        environmentServiceNameAWS: 'aws-virginia-dev'
         commandOptions: '-backend-config="bucket=tfstate-drp-automatization-devops" -backend-config="key=virginia/dev/redis-lambda.tfstate" -backend-config="region=us-east-1"'
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
