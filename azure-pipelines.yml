@@ -77,18 +77,13 @@ stages:
       inputs:
         provider: 'aws'
         command: 'init'
-        workingDirectory: 'infra'ßßß
-        backendServiceAWS: 'aws-virginia-dev-tf' 
-        backendAWSBucketName: 'tfstate-drp-automatization-devops' 
-        backendAWSKey: 'virginia/dev/redis-lambda.tfstate'
-        backendAWSRegion: 'us-east-1'
-      # ... (mantén tu configuración de init igual)
+        workingDirectory: 'infra'
+        environmentServiceNameAWS: 'aws-virginia-dev-tf'
+        commandOptions: '-backend-config="bucket=tfstate-drp-automatization-devops" -backend-config="key=virginia/dev/redis-lambda.tfstate" -backend-config="region=us-east-1"'
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Apply'
       env:
-        # Ya no inyectamos jfrog_token ni build_number aquí porque TF no los usa, 
-        # pero mantenemos los de infraestructura:
         TF_VAR_environment: 'DEV'
         TF_VAR_redis_endpoint: 'prueba-zzsueq.serverless.use1.cache.amazonaws.com'
         TF_VAR_lambda_execution_role_arn: 'arn:aws:iam::537650461158:role/DRP-Execution-CrossAccount-Role'
