@@ -10,8 +10,9 @@ variables:
   - group: drp-secrets # Importa JFROG_TOKEN de Azure DevOps
   - name: JFROG_REPO
     value: 'drp-artifacts'
-  - name: AWS_REGION
-    value: 'us-east-1'
+  # Nuevo flag: false despliega en us-east-1, true despliega en ca-central-1
+  - name: ENABLE_CANADA_DRP
+    value: 'false' 
 
 stages:
 - stage: Build_and_Publish
@@ -53,8 +54,8 @@ stages:
         buildName: '$(Build.DefinitionName)'
         buildNumber: '$(Build.BuildId)'
 
-- stage: Deploy_Dev_Virginia
-  displayName: 'Desplegar AWS (Dev Virginia)'
+- stage: Deploy_AWS
+  displayName: 'Desplegar AWS (Multi-Región)'
   dependsOn: Build_and_Publish
   condition: succeeded()
   jobs:
@@ -91,11 +92,14 @@ stages:
         backendServiceAWS: 'aws-virginia-dev-tf'
         backendAWSBucketName: 'tfstate-drp-automatization-devops'
         backendAWSKey: 'virginia/dev/redis-lambda.tfstate'
-        backendAWSRegion: 'us-east-1'
+        backendAWSRegion: 'us-east-1' # Mantiene el .tfstate centralizado en Virginia
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Apply'
       env:
+        # Pasa el valor de Azure DevOps a la variable enable_canada_drp de Terraform
+        TF_VAR_enable_canada_drp: '$(ENABLE_CANADA_DRP)'
+        
         TF_VAR_environment: 'DEV'
         TF_VAR_redis_endpoint: 'rediss://prueba-zzsueq.serverless.use1.cache.amazonaws.com:6379'
         TF_VAR_lambda_execution_role_arn: 'arn:aws:iam::537650461158:role/DRP-Redis-Lambda-Role'
