@@ -4,6 +4,7 @@
   required_providers {
     aws = {
       source  = "hashicorp/aws"
+      region = var.enable_canada_drp ? "ca-central-1" : "us-east-1"
       version = "~> 5.0"
     }
   }
