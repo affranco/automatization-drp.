@@ -28,3 +28,13 @@ variable "redis_port" {
   type        = number
   default     = 6379
 }
+
+variable "enable_canada_drp" {
+  description = "Flag: true para desplegar orquestador en ca-central-1, false para us-east-1"
+  type        = bool
+  default     = false
+}
+
+locals {
+  target_region = var.enable_canada_drp ? "ca-central-1" : "us-east-1"
+}
