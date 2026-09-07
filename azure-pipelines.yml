@@ -29,7 +29,9 @@ stages:
         cd package
         zip -r ../drp-redis-flush.zip .
         cd ..
-        zip -g drp-redis-flush.zip src/lambda_function.py
+        cd src
+        zip -g ../drp-redis-flush.zip lambda_function.py
+        cd ..
       displayName: 'Empaquetar dependencias y código en ZIP'
 
     - task: JFrogGenericArtifacts@1
