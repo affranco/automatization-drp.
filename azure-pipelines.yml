@@ -85,6 +85,8 @@ stages:
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Init'
+      env:
+        TF_VAR_enable_canada_drp: '$(ENABLE_CANADA_DRP)'
       inputs:
         provider: 'aws'
         command: 'init'
@@ -92,7 +94,7 @@ stages:
         backendServiceAWS: 'aws-virginia-dev-tf'
         backendAWSBucketName: 'tfstate-drp-automatization-devops'
         backendAWSKey: 'virginia/dev/redis-lambda.tfstate'
-        backendAWSRegion: 'us-east-1' # Mantiene el .tfstate centralizado en Virginia
+        backendAWSRegion: 'us-east-1'
 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Apply'

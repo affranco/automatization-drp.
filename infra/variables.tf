@@ -34,7 +34,3 @@ variable "enable_canada_drp" {
   type        = bool
   default     = false
 }
-
-locals {
-  target_region = var.enable_canada_drp ? "ca-central-1" : "us-east-1"
-}
