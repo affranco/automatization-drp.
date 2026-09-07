@@ -6,17 +6,18 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
-    redis_host = os.environ.get('REDIS_ENDPOINT')
-    redis_port = int(os.environ.get('REDIS_PORT', 6379))
+    # Tomamos la URL completa que configuraste en Terraform (rediss://...)
+    redis_url = os.environ.get('REDIS_ENDPOINT')
     environment = os.environ.get('ENVIRONMENT', 'DEV')
     
     # Flag dinámico para ejecución destructiva
     execute_flush = event.get('execute_flush', False)
     
-    logger.info(f"Validando Redis en {environment}. Endpoint: {redis_host}")
+    logger.info(f"Validando Redis en {environment}. URL: {redis_url}")
     
     try:
-        r = redis.Redis(host=redis_host, port=redis_port, socket_timeout=5, decode_responses=True)
+        # from_url procesa correctamente el rediss://, el host, el puerto y activa SSL
+        r = redis.from_url(redis_url, socket_timeout=5, decode_responses=True)
         
         if r.ping():
             logger.info("PING exitoso. Conectividad validada.")
