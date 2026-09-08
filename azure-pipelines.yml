@@ -115,8 +115,8 @@ stages:
         TF_VAR_environment: 'DEV'
         TF_VAR_redis_endpoint: 'rediss://prueba-zzsueq.serverless.use1.cache.amazonaws.com:6379'
         TF_VAR_lambda_execution_role_arn: 'arn:aws:iam::537650461158:role/DRP-Redis-Lambda-Role'
-        TF_VAR_lambda_security_group_id: 'sg-0d3459c7932d9e84b'
-        TF_VAR_private_subnet_ids: '["subnet-084f5211209b6d055", "subnet-00496c3f21802676c", "subnet-0c9aa04262f52e1d7"]'
+        # TF_VAR_lambda_security_group_id: 'sg-0d3459c7932d9e84b'
+        # TF_VAR_private_subnet_ids: '["subnet-084f5211209b6d055", "subnet-00496c3f21802676c", "subnet-0c9aa04262f52e1d7"]'
       inputs:
         provider: 'aws'
         command: 'apply'
