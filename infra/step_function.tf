@@ -22,7 +22,7 @@ resource "aws_sfn_state_machine" "drp_orchestrator" {
       VerificarAprobacion = {
         Type = "Pass"
         Result = "Aprobado, continuando DRP..."
-        End = true
+        End = false
       }
     }
   })
