@@ -96,6 +96,16 @@ stages:
         backendAWSKey: 'virginia/dev/redis-lambda.tfstate'
         backendAWSRegion: 'us-east-1'
 
+    # --- TAREA NUEVA PARA LIMPIAR EL ESTADO ANTES DEL APPLY ---
+    - script: |
+        echo "Removiendo recursos antiguos de Virginia del state..."
+        cd infra
+        terraform state rm aws_sfn_state_machine.drp_orchestrator || true
+        terraform state rm aws_sns_topic.drp_war_room || true
+      displayName: 'Limpiar recursos huérfanos del State de Terraform'
+      env:
+        AWS_DEFAULT_REGION: 'us-east-1'
+
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV4@4
       displayName: 'Terraform Apply'
       env:
