@@ -12,7 +12,7 @@ variables:
     value: 'drp-artifacts'
   # Nuevo flag: false despliega en us-east-1, true despliega en ca-central-1
   - name: ENABLE_CANADA_DRP
-    value: 'false' 
+    value: 'true' 
 
 stages:
 - stage: Build_and_Publish
